@@ -1,14 +1,16 @@
-import pygame, math, threading
+import pygame, math
 from sys import maxsize as infinity
 from pieces import *
 from board import *
 
+play_with_computer = False
 
 # DEPTH FOR BOT
 DEPTH = 1
 
-HIGHLIGHT_COLOR = (255,0,0)
+HIGHLIGHT_COLOR = (77, 76, 73, 100)
 FONT_COLOR = (0,0,0)
+MOVED_COLOR = (235, 222, 101)
 LIGHT_SQUARES = (204, 183, 174)
 DARK_SQUARES = (112, 102, 119)
 
@@ -66,15 +68,11 @@ pygame.display.set_caption("Chess")
 pygame.font.init()
 size = 40
 game_over = False
+alpha = -infinity
+beta = infinity
 got = ""
 font = pygame.font.SysFont("Consolas", size)
 
-
-def handle_pawn_promotion(piece):
-	queen = Queen(turn, piece.coordinates)
-	pieces_in_play.remove(piece)
-	pieces_in_play.append(queen)
-	game_board.set(piece, piece.coordinates)
 
 def get_legal_moves(piece):
 	moves = piece.get_possible_moves(game_board.board)
@@ -126,6 +124,15 @@ def draw_board(screen):
 
 def draw_pieces(screen, pieces):
 	for piece in pieces_in_play:
+		x, y = piece.coordinates
+		if piece.highlight:
+			s = pygame.Surface((PS, PS))
+			s.set_alpha(200)
+			s.fill(MOVED_COLOR)
+			screen.blit(s, (y*PS, x*PS))
+		screen.blit(piece.image, (y*PS+3, x*PS+12))
+
+	for piece in pieces_in_play:
 		if piece.highlight:
 			for move in get_legal_moves(piece):
 				if move == "O-O":
@@ -143,14 +150,14 @@ def draw_pieces(screen, pieces):
 				else:
 					x,y = move
 
-				s = pygame.Surface((PS, PS))
-				s.set_alpha(100)
-				s.fill(HIGHLIGHT_COLOR)
-				screen.blit(s, (y*PS, x*PS))
-
-	for piece in pieces_in_play:
-		x, y = piece.coordinates
-		screen.blit(piece.image, (y*PS+4, x*PS+10))
+				if game_board.get((x,y)) != []:
+					s = pygame.Surface((SIDE, SIDE), pygame.SRCALPHA)
+					pygame.draw.circle(s, HIGHLIGHT_COLOR, (y*PS + PS / 2, x*PS + PS / 2), PS / 2, width=5)
+					screen.blit(s, (0,0))
+				else:
+					s = pygame.Surface((SIDE, SIDE), pygame.SRCALPHA)
+					pygame.draw.circle(s, HIGHLIGHT_COLOR, (y*PS + PS / 2, x*PS + PS / 2), PS / 6)
+					screen.blit(s, (0,0))
 
 def flip(lst):
 	newlst = []
@@ -160,25 +167,7 @@ def flip(lst):
 	return newlst
 
 def get_square_table(piece):
-	if piece.pieceType == "king":
-		table = [
-			[-3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0],
-			[-3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0],
-			[-3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0],
-			[-3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0],
-			[-2.0, -3.0, -3.0, -4.0, -4.0, -3.0, -3.0, -2.0],
-			[-1.0, -2.0, -2.0, -2.0, -2.0, -2.0, -2.0, -1.0],
-			[ 2.0,  2.0,  0.0,  0.0,  0.0,  0.0,  2.0,  2.0],
-			[ 3.0,  4.0,  4.0,  1.0,  1.0,  3.0, 4.0, 3.0]
-		]
-
-		if piece.color == "white":
-			return table
-
-		else:
-			return flip(table)
-
-	elif piece.pieceType == "queen":
+	if piece.pieceType == "queen":
 		table = [
 			[1, 1, 1, 3, 1, 1, 1, 1],
 			[1, 2, 3, 3, 3, 1, 1, 1],
@@ -268,7 +257,8 @@ def get_square_table(piece):
 		else:
 			return flip(table)
 
-def evaluate(pieces_in_play, isMaximizing):
+def evaluate(isMaximizing):
+	global alpha, beta
 	if isCheckMate("white" if isMaximizing else "black"):
 		if isMaximizing:
 			return -infinity
@@ -286,20 +276,52 @@ def evaluate(pieces_in_play, isMaximizing):
 		"queen":9,
 		"king":0
 	}
-	white_eval = 0
-	black_eval = 0
+
+	evaluation = 0
 
 	for piece in pieces_in_play:
-		x,y = piece.coordinates
-		if piece.color == "white":
-			white_eval += get_square_table(piece)[x][y] * 0.1
-			white_eval += piece_points[piece.pieceType]
+		if piece.pieceType != "king":
+			x,y = piece.coordinates
+			if piece.color == "white":
+				evaluation += get_square_table(piece)[x][y] * 0.1 + piece_points[piece.pieceType]
 
-		else:
-			black_eval += get_square_table(piece)[x][y] * 0.1
-			black_eval += piece_points[piece.pieceType] 
+			else:
+				evaluation -= get_square_table(piece)[x][y] * 0.1 + piece_points[piece.pieceType] 
 
-	evaluation = white_eval - black_eval
+	if isMaximizing:
+		captures = get_captures("white")
+
+		if captures == []:
+			return evaluation
+
+		for capture, piece in captures:
+			makeMove(piece, capture)
+			e = evaluate(False)
+			undoMove()
+			if e > evaluation:
+				evaluation = e
+
+			alpha = max(alpha, evaluation)
+			if alpha >= beta:
+				break
+
+	else:
+		captures = get_captures("black")
+
+		if captures == []:
+			return evaluation
+
+		for capture, piece in captures:
+			makeMove(piece, capture)
+			e = evaluate(True)
+			undoMove()
+			if e < evaluation:
+				evaluation = e
+
+			beta = min(beta, evaluation)
+			if alpha >= beta:
+				break
+
 	return evaluation
 
 def gameover(text):
@@ -353,7 +375,7 @@ def isCheckMate(turn):
 
 def minmax(isMaximizing, depth, alpha, beta):
 	if depth == 0:
-		return evaluate(pieces_in_play, isMaximizing)
+		return evaluate(isMaximizing)
 
 	elif isMaximizing:
 		bestscore = -infinity
@@ -368,6 +390,7 @@ def minmax(isMaximizing, depth, alpha, beta):
 			alpha = max(alpha, bestscore)
 			if alpha >= beta:
 				break
+
 
 	elif not isMaximizing:
 		bestscore = infinity
@@ -390,25 +413,26 @@ def get_moves(color):
 	for piece in pieces_in_play:
 		if piece.color == color:
 			for move in get_legal_moves(piece):
-				if move == "O-O":
-					moves.append([move, piece])
-					continue
-
-				elif move == "O-O-O":
-					moves.append([move, piece])
-					continue
-
-				elif game_board.get(move) != []:
-					if game_board.get(move).color != piece.color:
+				if not move in moves:
+					if move == "O-O":
 						moves.append([move, piece])
+						continue
 
-				elif piece.pieceType == "pawn" and game_board.get(move) == 7:
-					moves.append([move, piece])
+					elif move == "O-O-O":
+						moves.append([move, piece])
+						continue
+
+					elif game_board.get(move) != []:
+						if game_board.get(move).color != piece.color:
+							moves.append([move, piece])
+
+					elif piece.pieceType == "pawn" and (move[0] == 7 or move[0] == 0):
+						moves.append([move, piece])
 
 	for piece in pieces_in_play:
 		if piece.color == color:
 			for move in get_legal_moves(piece):
-				if not move in moves:
+				if not [move, piece] in moves:
 					moves.append([move, piece])
 
 	return moves
@@ -462,11 +486,11 @@ def undoMove():
 
 
 def check_game_over():
-	if isDraw('white' if turn == 'black' else 'black'):
-		gameover("It's A Draw!")
-
-	elif isCheckMate(turn):
+	if isCheckMate(turn):
 		gameover(f"Checkmate! {'white' if turn == 'black' else 'black'} Wins!")
+
+	elif isDraw(turn):
+		gameover("It's A Draw!")
 
 
 def makeMove(piece, move):
@@ -485,19 +509,56 @@ def makeMove(piece, move):
 
 def get_captures(color):
 	captures = []
-	for move, piece in get_moves(color):
-		if game_board.get(move) != [] and game_board.get(move).color != color:
-			if not move in captures:
-				captures.append(move)
+	moves = get_moves(color)
+	for move, piece in moves:
+		if move != "O-O" and move != "O-O-O":
+			if game_board.get(move) != [] and game_board.get(move).color != color:
+				if not [move,piece] in captures:
+					capturing = game_board.get(move)
+					if piece.pieceType != "queen" and capturing.pieceType == "queen":
+						captures.append([move, piece])
+
+					elif piece.pieceType == "pawn" and capturing.pieceType != "pawn":
+						captures.append([move, piece])
+
+					elif (piece.pieceType == "knight" or piece.pieceType == "bishop") and capturing.pieceType == "rook":
+						captures.append([move, piece])
+
+	for move, piece in moves:
+		if move != "O-O" and move != "O-O-O":
+			if game_board.get(move) != [] and game_board.get(move).color != color:
+				if not [move,piece] in captures:
+					captures.append([move,piece])
+
 	return captures
+
+def update():
+	draw_board(screen)
+	if game_board.lastmove != []:
+		if game_board.lastmove[0] == "promotion":
+			s1, s2, _ = game_board.lastmove[1]
+		else:
+			s1, s2, _ = game_board.lastmove[0]
+
+		s = pygame.Surface((PS, PS))
+		s.set_alpha(200)
+		s.fill(MOVED_COLOR)
+		screen.blit(s, (s1[1]*PS, s1[0]*PS))
+
+		s = pygame.Surface((PS, PS))
+		s.set_alpha(200)
+		s.fill(MOVED_COLOR)
+		screen.blit(s, (s2[1]*PS, s2[0]*PS))
+		
+	draw_pieces(screen, pieces)
 
 
 def mainloop():
 	global moved
 	running = True
 	while running:
-		draw_board(screen)
-		draw_pieces(screen, pieces)
+		update()
+
 		if game_over:
 			gof = font.render(got, True, FONT_COLOR)
 			screen.blit(gof, (SIDE / 2 - len(got)/2 * (size/2+1), SIDE / 2 - size/2))
@@ -506,13 +567,13 @@ def mainloop():
 			if event.type == pygame.QUIT:
 				running = False
 
-			elif event.type == pygame.MOUSEBUTTONDOWN and not game_over and turn == "white":
+			elif event.type == pygame.MOUSEBUTTONDOWN and not game_over:
+				x, y = pygame.mouse.get_pos()
+				x = math.floor(x / PS)
+				y = math.floor(y / PS)
 				for piece in pieces_in_play:
 					if piece.highlight:
 						if turn == piece.color:
-							x, y = pygame.mouse.get_pos()
-							x = math.floor(x / PS)
-							y = math.floor(y / PS)
 							moves = get_legal_moves(piece)
 
 							if ("O-O" in moves and x == piece.coordinates[1] + 2 and y == piece.coordinates[0]) or ("O-O-O" in moves and x == piece.coordinates[1] - 2 and y == piece.coordinates[0]) or ((y,x) in moves):
@@ -525,6 +586,12 @@ def mainloop():
 
 									elif (y,x) == move:
 										makeMove(piece, move)
+
+							elif game_board.get((y,x)) != [] and game_board.get((y,x)).color == turn:
+								piece.highlight = False
+								game_board.get((y,x)).highlight = True
+								continue
+
 							else:
 								moved = True
 								piece.highlight = False
@@ -534,11 +601,13 @@ def mainloop():
 							check_game_over()
 							moved = True
 							piece.highlight = False
-							pygame.display.set_caption("Thinking...")
-							draw_board(screen)
-							draw_pieces(screen, pieces)
+							update()
 							pygame.display.update()
-							play_computer_move()
+							if play_with_computer:
+								pygame.display.set_caption("Thinking...")
+								play_computer_move()
+							else:
+								evaluate(True if turn == "white" else False)
 
 							
 				if not moved:

@@ -443,14 +443,14 @@ class King:
 		elif direction == "O-O":
 			if not self.hasMoved and board[x][y+3] != [] and board[x][y+1] == [] and board[x][y+2] == []:
 				rook = board[x][y+3]
-				if not rook.hasMoved and rook.pieceType == "rook" and rook.color == self.color and not (x, y+2) in squares:
+				if rook.pieceType == "rook" and not rook.hasMoved and rook.color == self.color and not (x, y+2) in squares:
 					self.moves.append("O-O")
 
 
 		elif direction == "O-O-O":
 			if not self.hasMoved and board[x][y-4] != [] and board[x][y-1] == [] and board[x][y-2] == [] and board[x][y-3] == []:
 				rook = board[x][y-4]
-				if not rook.hasMoved and rook.pieceType == "rook" and rook.color == self.color and not (x, y-2) in squares:
+				if rook.pieceType == "rook" and not rook.hasMoved and rook.color == self.color and not (x, y-2) in squares:
 					self.moves.append("O-O-O")
 
 
