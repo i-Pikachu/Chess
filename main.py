@@ -3,7 +3,7 @@ from sys import maxsize as infinity
 from pieces import *
 from board import *
 
-play_with_computer = False
+play_with_computer = True
 
 # DEPTH FOR BOT
 DEPTH = 1
@@ -169,14 +169,14 @@ def flip(lst):
 def get_square_table(piece):
 	if piece.pieceType == "queen":
 		table = [
-			[1, 1, 1, 3, 1, 1, 1, 1],
-			[1, 2, 3, 3, 3, 1, 1, 1],
-			[1, 4, 3, 3, 3, 4, 2, 1],
-			[1, 2, 3, 3, 3, 2, 2, 1],
-			[1, 2, 3, 3, 3, 2, 2, 1],
-			[1, 4, 3, 3, 3, 4, 2, 1],
-			[1, 2, 3, 3, 3, 1, 1, 1],
-			[1, 1, 1, 3, 1, 1, 1, 1]
+			[-20,-10,-10, -5, -5,-10,-10,-20],
+			[-10,  0,  0,  0,  0,  0,  0,-10],
+			[-10,  0,  5,  5,  5,  5,  0,-10],
+			[ -5,  0,  5,  5,  5,  5,  0, -5],
+ 			[  0,  0,  5,  5,  5,  5,  0, -5],
+			[-10,  5,  5,  5,  5,  5,  0,-10],
+			[-10,  0,  5,  0,  0,  0,  0,-10],
+			[-20,-10,-10, -5, -5,-10,-10,-20]
 		]
 
 		if piece.color == "white":
@@ -187,14 +187,14 @@ def get_square_table(piece):
 
 	elif piece.pieceType == "bishop":
 		table = [
-			[4, 3, 2, 1, 1, 2, 3, 4],
-			[3, 4, 3, 2, 2, 3, 4, 3],
-			[2, 3, 4, 3, 3, 4, 3, 2],
-			[1, 2, 3, 4, 4, 3, 2, 1],
-			[1, 2, 3, 4, 4, 3, 2, 1],
-			[2, 3, 4, 3, 3, 4, 3, 2],
-			[3, 4, 3, 2, 2, 3, 4, 3],
-			[4, 3, 2, 1, 1, 2, 3, 4]
+			[-20,-10,-10,-10,-10,-10,-10,-20],
+			[-10,  0,  0,  0,  0,  0,  0,-10],
+			[-10,  0,  5, 10, 10,  5,  0,-10],
+			[-10,  5,  5, 10, 10,  5,  5,-10],
+			[-10,  0, 10, 10, 10, 10,  0,-10],
+			[-10, 10, 10, 10, 10, 10, 10,-10],
+			[-10,  5,  0,  0,  0,  0,  5,-10],
+			[-20,-10,-10,-10,-10,-10,-10,-20]
 		]
 
 		if piece.color == "white":
@@ -205,14 +205,14 @@ def get_square_table(piece):
 
 	elif piece.pieceType == "knight":
 		table = [
-			[1, 1, 1, 1, 1, 1, 1, 1],
-			[1, 2, 2, 2, 2, 2, 2, 1],
-			[1, 2, 3, 3, 3, 3, 2, 1],
-			[1, 2, 3, 4, 4, 3, 2, 1],
-			[1, 2, 3, 4, 4, 3, 2, 1],
-			[1, 2, 3, 3, 3, 3, 2, 1],
-			[1, 2, 2, 2, 2, 2, 2, 1],
-			[1, 1, 1, 1, 1, 1, 1, 1]
+			[-50,-40,-30,-30,-30,-30,-40,-50],
+			[-40,-20,  0,  0,  0,  0,-20,-40],
+			[-30,  0, 10, 15, 15, 10,  0,-30],
+			[-30,  5, 15, 20, 20, 15,  5,-30],
+			[-30,  0, 15, 20, 20, 15,  0,-30],
+			[-30,  5, 10, 15, 15, 10,  5,-30],
+			[-40,-20,  0,  5,  5,  0,-20,-40],
+			[-50,-40,-30,-30,-30,-30,-40,-50]
 		]
 
 		if piece.color == "white":
@@ -223,14 +223,14 @@ def get_square_table(piece):
 
 	elif piece.pieceType == "rook":
 		table = [
-			[4, 3, 4, 4, 4, 4, 3, 4],
-			[4, 4, 4, 4, 4, 4, 4, 4],
-			[1, 1, 2, 3, 3, 2, 1, 1],
-			[1, 2, 3, 4, 4, 3, 2, 1],
-			[1, 2, 3, 4, 4, 3, 2, 1],
-			[1, 1, 2, 3, 3, 2, 1, 1],
-			[4, 4, 4, 4, 4, 4, 4, 4],
-			[4, 3, 4, 4, 4, 4, 3, 4]
+			[0,  0,  0,  0,  0,  0,  0,  0],
+			[5, 10, 10, 10, 10, 10, 10,  5],
+			[-5,  0,  0,  0,  0,  0,  0, -5],
+			[-5,  0,  0,  0,  0,  0,  0, -5],
+			[-5,  0,  0,  0,  0,  0,  0, -5],
+			[-5,  0,  0,  0,  0,  0,  0, -5],
+			[-5,  0,  0,  0,  0,  0,  0, -5],
+			[ 0,  0,  0,  5,  5,  0,  0,  0]
 		]
 
 		if piece.color == "white":
@@ -241,14 +241,32 @@ def get_square_table(piece):
 
 	elif piece.pieceType == "pawn":
 		table = [
-			[8, 8, 8, 8, 8, 8, 8, 8],
-			[8, 8, 8, 8, 8, 8, 8, 8],
-			[5, 6, 6, 7, 7, 6, 6, 5],
-			[2, 3, 3, 5, 5, 3, 3, 2],
-			[1, 2, 3, 4, 4, 3, 2, 1],
-			[1, 1, 2, 3, 3, 2, 1, 1],
-			[1, 1, 1, 0, 0, 1, 1, 1],
-			[0, 0, 0, 0, 0, 0, 0, 0],
+			[ 0,  0,  0,  0,  0,  0,  0,  0],
+			[50, 50, 50, 50, 50, 50, 50, 50],
+			[10, 10, 20, 30, 30, 20, 10, 10],
+			[ 5,  5, 10, 25, 25, 10,  5,  5],
+			[ 0,  0,  0, 20, 20,  0,  0,  0],
+			[ 5, -5,-10,  0,  0,-10, -5,  5],
+			[ 5, 10, 10,-20,-20, 10, 10,  5],
+			[ 0,  0,  0,  0,  0,  0,  0,  0]
+		]
+
+		if piece.color == "white":
+			return table
+
+		else:
+			return flip(table)
+
+	elif piece.pieceType == "king":
+		table = [
+			[-50,-40,-30,-20,-20,-30,-40,-50],
+			[-30,-20,-10,  0,  0,-10,-20,-30],
+			[-30,-10, 20, 30, 30, 20,-10,-30],
+			[-30,-10, 30, 40, 40, 30,-10,-30],
+			[-30,-10, 30, 40, 40, 30,-10,-30],
+			[-30,-10, 20, 30, 30, 20,-10,-30],
+			[-30,-30,  0,  0,  0,  0,-30,-30],
+			[-50,-30,-30,-30,-30,-30,-30,-50]
 		]
 
 		if piece.color == "white":
@@ -269,12 +287,12 @@ def evaluate(isMaximizing):
 		return 0
 
 	piece_points = {
-		"pawn":1,
-		"knight":3,
-		"bishop":3,
-		"rook":5,
-		"queen":9,
-		"king":0
+		"pawn":100,
+		"knight":320,
+		"bishop":330,
+		"rook":500,
+		"queen":900,
+		"king":20000
 	}
 
 	evaluation = 0
@@ -283,10 +301,10 @@ def evaluate(isMaximizing):
 		if piece.pieceType != "king":
 			x,y = piece.coordinates
 			if piece.color == "white":
-				evaluation += get_square_table(piece)[x][y] * 0.1 + piece_points[piece.pieceType]
+				evaluation += get_square_table(piece)[x][y] + piece_points[piece.pieceType]
 
 			else:
-				evaluation -= get_square_table(piece)[x][y] * 0.1 + piece_points[piece.pieceType] 
+				evaluation -= get_square_table(piece)[x][y] + piece_points[piece.pieceType] 
 
 	if isMaximizing:
 		captures = get_captures("white")
@@ -518,7 +536,7 @@ def get_captures(color):
 					if piece.pieceType != "queen" and capturing.pieceType == "queen":
 						captures.append([move, piece])
 
-					elif piece.pieceType == "pawn" and capturing.pieceType != "pawn":
+					elif piece.pieceType == "pawn":
 						captures.append([move, piece])
 
 					elif (piece.pieceType == "knight" or piece.pieceType == "bishop") and capturing.pieceType == "rook":
